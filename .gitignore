@@ -1,0 +1,33 @@
+# OS files
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# Editor files
+.vscode/
+.idea/
+*.sublime-*
+
+# Temporary files
+*.tmp
+*.log
+~$*
+
+# PDF files (keep the resume PDFs but ignore temp PDFs)
+*.pdf
+!Jaya Agrawal Resume - Corp accountant.pdf
+!Splunk Talent Profile - Jaya.pdf
+
+# Word temp files
+~$*.docx
+~$*.doc
+
+# Node modules (if any)
+node_modules/
+
+# Build files
+dist/
+build/
+
