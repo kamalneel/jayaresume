@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { width: 100%; height: 100%; overflow: hidden; }
+  body { width: 100%; height: 100%; overflow: hidden; position: relative; font-family: 'Inter', sans-serif; background: #F7F8FA; color: #14161C; }
+  .slide-scaler { width: 1920px; height: 1080px; transform-origin: top left; position: absolute; overflow: hidden; }
+  .slide { width: 1920px; height: 1080px; padding: 140px 180px; display: flex; flex-direction: column; }
+  .eyebrow { font-size: 20px; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: #6366F1; margin-bottom: 22px; }
+  h2 { font-size: 76px; font-weight: 800; letter-spacing: -0.025em; }
+  .cards { margin-top: 88px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px; flex: 1; align-content: start; }
+  .card { background: #FFFFFF; border: 1px solid #E4E7EE; border-radius: 22px; padding: 52px 44px; box-shadow: 0 24px 60px rgba(20,22,28,0.06); }
+  .num { font-family: 'Instrument Serif', Georgia, serif; font-style: italic; font-size: 40px; color: #6366F1; margin-bottom: 28px; }
+  .card h3 { font-size: 32px; font-weight: 700; letter-spacing: -0.01em; line-height: 1.25; }
+</style>
+</head>
+<body>
+  <div class="slide-scaler">
+    <div class="slide">
+      <div class="eyebrow">Scope</div>
+      <h2>Three Modules</h2>
+      <div class="cards">
+        <div class="card"><div class="num">01</div><h3>Prepaid Policy</h3></div>
+        <div class="card"><div class="num">02</div><h3>PO Accrual Automation</h3></div>
+        <div class="card"><div class="num">03</div><h3>AI-Native Flux Analysis</h3></div>
+      </div>
+    </div>
+  </div>
+  <script>
+  (function(){
+    function s(){var el=document.querySelector(".slide-scaler");if(!el)return;
+    var vw=window.innerWidth,vh=window.innerHeight,scale=Math.min(vw/1920,vh/1080);
+    el.style.transform="scale("+scale+")";
+    el.style.left=((vw-1920*scale)/2)+"px";
+    el.style.top=((vh-1080*scale)/2)+"px";}
+    window.addEventListener("resize",s);s();
+  })();
+  </script>
+</body>
+</html>

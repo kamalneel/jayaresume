@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { width: 100%; height: 100%; overflow: hidden; }
+  body { width: 100%; height: 100%; overflow: hidden; position: relative; font-family: 'Inter', sans-serif; background: #14161C; color: #ECEEF3; }
+  .slide-scaler { width: 1920px; height: 1080px; transform-origin: top left; position: absolute; overflow: hidden; }
+  .slide { width: 1920px; height: 1080px; padding: 120px 180px; display: flex; flex-direction: column; position: relative; }
+  .glow { position: absolute; width: 700px; height: 700px; border-radius: 50%; filter: blur(140px); background: rgba(99,102,241,0.16); top: -220px; right: -160px; pointer-events: none; }
+  .eyebrow { position: relative; font-size: 20px; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: #8B93A7; margin-bottom: 22px; }
+  h2 { position: relative; font-size: 72px; font-weight: 800; letter-spacing: -0.025em; max-width: 1400px; }
+  .kpis { position: relative; margin-top: 72px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 40px; }
+  .kpi { border: 1px solid rgba(255,255,255,0.09); border-radius: 22px; padding: 44px 40px 40px; background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01)); }
+  .kpi.lead { border-color: rgba(45,212,191,0.4); }
+  .kpi .val { font-size: 88px; font-weight: 800; letter-spacing: -0.03em; line-height: 1; color: #ECEEF3; }
+  .kpi.lead .val { color: #2DD4BF; }
+  .kpi .lbl { margin-top: 18px; font-size: 23px; font-weight: 600; color: #C7CCDA; }
+  .note { position: relative; margin-top: 56px; font-size: 25px; line-height: 1.55; color: #AEB6C6; max-width: 1300px; }
+  .note b { color: #ECEEF3; font-weight: 600; }
+</style>
+</head>
+<body>
+  <div class="slide-scaler">
+    <div class="slide">
+      <div class="glow"></div>
+      <div class="eyebrow">Module 1 — Prepaid Policy</div>
+      <h2>Prepaid Threshold</h2>
+      <div class="kpis">
+        <div class="kpi"><div class="val">$10K</div><div class="lbl">Current — Wing</div></div>
+        <div class="kpi lead"><div class="val">$15K</div><div class="lbl">Recommended — Wing</div></div>
+        <div class="kpi"><div class="val">$25K</div><div class="lbl">Consolidation — Alphabet</div></div>
+      </div>
+      <p class="note">Set deliberately <b>below</b> the parent's consolidation threshold, not at or above it — a sub-level threshold at or above $25K risks individually-immaterial items aggregating into a material misstatement at consolidation (SAB 99).</p>
+    </div>
+  </div>
+  <script>
+  (function(){
+    function s(){var el=document.querySelector(".slide-scaler");if(!el)return;
+    var vw=window.innerWidth,vh=window.innerHeight,scale=Math.min(vw/1920,vh/1080);
+    el.style.transform="scale("+scale+")";
+    el.style.left=((vw-1920*scale)/2)+"px";
+    el.style.top=((vh-1080*scale)/2)+"px";}
+    window.addEventListener("resize",s);s();
+  })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { width: 100%; height: 100%; overflow: hidden; }
+  body { width: 100%; height: 100%; overflow: hidden; position: relative; font-family: 'Inter', sans-serif; background: #14161C; color: #ECEEF3; }
+  .slide-scaler { width: 1920px; height: 1080px; transform-origin: top left; position: absolute; overflow: hidden; }
+  .slide { width: 1920px; height: 1080px; position: relative; display: flex; flex-direction: column; justify-content: center; padding: 0 180px; }
+  .glow { position: absolute; border-radius: 50%; filter: blur(120px); pointer-events: none; }
+  .glow.a { width: 720px; height: 720px; top: -200px; left: -120px; background: rgba(99,102,241,0.22); }
+  .glow.b { width: 640px; height: 640px; bottom: -240px; right: -100px; background: rgba(45,212,191,0.14); }
+  .wordmark { position: relative; font-size: 32px; font-weight: 800; letter-spacing: -0.02em; color: #ECEEF3; margin-bottom: 64px; }
+  h1 { position: relative; font-size: 116px; line-height: 1.05; font-weight: 800; letter-spacing: -0.03em; max-width: 1500px; }
+  h1 em { font-family: 'Instrument Serif', Georgia, serif; font-style: italic; font-weight: 400; color: #A5B4FC; }
+  .rule { position: relative; margin-top: 56px; width: 88px; height: 4px; border-radius: 2px; background: linear-gradient(90deg, #6366F1, #2DD4BF); }
+</style>
+</head>
+<body>
+  <div class="slide-scaler">
+    <div class="slide">
+      <div class="glow a"></div>
+      <div class="glow b"></div>
+      <div class="wordmark">Wing</div>
+      <h1>Accounting Lead <em>Case Study</em></h1>
+      <div class="rule"></div>
+    </div>
+  </div>
+  <script>
+  (function(){
+    function s(){var el=document.querySelector(".slide-scaler");if(!el)return;
+    var vw=window.innerWidth,vh=window.innerHeight,scale=Math.min(vw/1920,vh/1080);
+    el.style.transform="scale("+scale+")";
+    el.style.left=((vw-1920*scale)/2)+"px";
+    el.style.top=((vh-1080*scale)/2)+"px";}
+    window.addEventListener("resize",s);s();
+  })();
+  </script>
+</body>
+</html>

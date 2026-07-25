@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { width: 100%; height: 100%; overflow: hidden; }
+  body { width: 100%; height: 100%; overflow: hidden; position: relative; font-family: 'Inter', sans-serif; background: #F7F8FA; color: #14161C; }
+  .slide-scaler { width: 1920px; height: 1080px; transform-origin: top left; position: absolute; overflow: hidden; }
+  .slide { width: 1920px; height: 1080px; padding: 120px 180px; display: flex; flex-direction: column; }
+  .eyebrow { font-size: 20px; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: #6366F1; margin-bottom: 22px; }
+  h2 { font-size: 72px; font-weight: 800; letter-spacing: -0.025em; }
+  .cols { margin-top: 72px; display: grid; grid-template-columns: 1fr 1fr; gap: 40px; flex: 1; }
+  .col { background: #FFFFFF; border: 1px solid #E4E7EE; border-radius: 22px; padding: 48px 44px; box-shadow: 0 24px 60px rgba(20,22,28,0.06); }
+  .col h3 { font-size: 30px; font-weight: 700; margin-bottom: 28px; color: #4F46E5; }
+  .col ul { list-style: none; }
+  .col li { font-size: 22px; line-height: 1.6; color: #3A4257; padding-left: 30px; position: relative; margin-bottom: 18px; }
+  .col li::before { content: ''; position: absolute; left: 0; top: 12px; width: 8px; height: 8px; border-radius: 50%; background: #6366F1; }
+  .col li b { color: #14161C; font-weight: 600; }
+</style>
+</head>
+<body>
+  <div class="slide-scaler">
+    <div class="slide">
+      <div class="eyebrow">Module 1 — Prepaid Policy</div>
+      <h2>Below Threshold &amp; Audit Support</h2>
+      <div class="cols">
+        <div class="col">
+          <h3>Immediate Expensing</h3>
+          <ul>
+            <li><b>Full expense</b> at invoice/payment to the natural GL line, regardless of service period.</li>
+            <li>Exception: recurring multi-period items (e.g. annual insurance) still amortized for trend consistency.</li>
+            <li>Quarterly look-back on the population of sub-threshold recurring spend, to evidence aggregate immateriality.</li>
+          </ul>
+        </div>
+        <div class="col">
+          <h3>Audit Documentation</h3>
+          <ul>
+            <li>Source invoice or contract with explicit service-period dates.</li>
+            <li>Cost-center-owner sign-off on nature and period of benefit.</li>
+            <li>System-generated amortization schedule — not a spreadsheet.</li>
+            <li>Second-tier approval (Controller) above $100K.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script>
+  (function(){
+    function s(){var el=document.querySelector(".slide-scaler");if(!el)return;
+    var vw=window.innerWidth,vh=window.innerHeight,scale=Math.min(vw/1920,vh/1080);
+    el.style.transform="scale("+scale+")";
+    el.style.left=((vw-1920*scale)/2)+"px";
+    el.style.top=((vh-1080*scale)/2)+"px";}
+    window.addEventListener("resize",s);s();
+  })();
+  </script>
+</body>
+</html>

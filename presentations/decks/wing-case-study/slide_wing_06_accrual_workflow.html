@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { width: 100%; height: 100%; overflow: hidden; }
+  body { width: 100%; height: 100%; overflow: hidden; position: relative; font-family: 'Inter', sans-serif; background: #F7F8FA; color: #14161C; }
+  .slide-scaler { width: 1920px; height: 1080px; transform-origin: top left; position: absolute; overflow: hidden; }
+  .slide { width: 1920px; height: 1080px; padding: 120px 180px; display: flex; flex-direction: column; }
+  .eyebrow { font-size: 20px; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: #6366F1; margin-bottom: 22px; }
+  h2 { font-size: 72px; font-weight: 800; letter-spacing: -0.025em; }
+  .steps { margin-top: 72px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 28px; flex: 1; }
+  .step { background: #FFFFFF; border: 1px solid #E4E7EE; border-radius: 22px; padding: 40px 32px; display: flex; flex-direction: column; box-shadow: 0 24px 60px rgba(20,22,28,0.06); }
+  .num { width: 52px; height: 52px; border-radius: 14px; background: #EEF0FE; color: #4F46E5; font-size: 24px; font-weight: 700; display: flex; align-items: center; justify-content: center; margin-bottom: 26px; }
+  .step h3 { font-size: 26px; font-weight: 700; letter-spacing: -0.01em; margin-bottom: 14px; line-height: 1.25; }
+  .step p { font-size: 19px; line-height: 1.5; color: #545C70; }
+  .step code { font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: 16px; background: #F1F2F6; padding: 2px 6px; border-radius: 5px; color: #4F46E5; }
+</style>
+</head>
+<body>
+  <div class="slide-scaler">
+    <div class="slide">
+      <div class="eyebrow">Module 2 — PO Accrual Automation</div>
+      <h2>Automated Workflow</h2>
+      <div class="steps">
+        <div class="step">
+          <div class="num">1</div>
+          <h3>Auto-populate</h3>
+          <p>Month-end accrual population pulled straight from the GR/IR aging report (<code>MB5S</code>), not a manual PO download.</p>
+        </div>
+        <div class="step">
+          <div class="num">2</div>
+          <h3>Auto-post</h3>
+          <p>Recurring JE template posts the accrual; manual review reserved only for balances above a set $ threshold.</p>
+        </div>
+        <div class="step">
+          <div class="num">3</div>
+          <h3>Reverse &amp; net</h3>
+          <p>Auto-reversing entry clears Day 1 of the new month; the actual invoice nets against GR/IR with no manual tracking.</p>
+        </div>
+        <div class="step">
+          <div class="num">4</div>
+          <h3>Accrual-to-actual</h3>
+          <p>Monthly variance by PO/vendor, tolerance-based escalation, tracked as a rolling accrual-accuracy KPI.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script>
+  (function(){
+    function s(){var el=document.querySelector(".slide-scaler");if(!el)return;
+    var vw=window.innerWidth,vh=window.innerHeight,scale=Math.min(vw/1920,vh/1080);
+    el.style.transform="scale("+scale+")";
+    el.style.left=((vw-1920*scale)/2)+"px";
+    el.style.top=((vh-1080*scale)/2)+"px";}
+    window.addEventListener("resize",s);s();
+  })();
+  </script>
+</body>
+</html>

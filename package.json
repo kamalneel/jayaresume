@@ -2,7 +2,16 @@
   "name": "jayaresume",
   "private": true,
   "type": "module",
+  "scripts": {
+    "pptx": "node presentations/scripts/export-pptx.mjs",
+    "pdf": "node presentations/scripts/export-pdf.mjs"
+  },
   "dependencies": {
     "@vercel/functions": "^1.5.0"
+  },
+  "devDependencies": {
+    "playwright": "^1.58.2",
+    "pptxgenjs": "^3.12.0",
+    "pdf-lib": "^1.17.1"
   }
 }

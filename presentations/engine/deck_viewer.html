@@ -1,0 +1,889 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- auth-gate.js is OPTIONAL. It provides share-token gating. The stub in this
+         bundle is a no-op so the viewer runs standalone. Swap in a real gate later. -->
+    <script src="./auth-gate.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deck Viewer</title>
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Slide Deck">
+    <meta property="og:description" content="HTML slide deck.">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; }
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            overflow: hidden;
+            background: #221D17;
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* Slide container for scaling */
+        #slide-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        #slide-wrapper {
+            width: 1920px;
+            height: 1080px;
+            transform-origin: center center;
+            transition: transform 0.1s ease;
+        }
+
+        #slide-frame {
+            width: 1920px;
+            height: 1080px;
+            border: none;
+            display: block;
+        }
+
+        /* Mobile deck: full-screen, no chrome, swipe-only */
+        body.mobile-deck #slide-container { bottom: 0; }
+        body.mobile-deck #controls { display: none !important; }
+        body.mobile-deck #slide-wrapper {
+            width: 100%;
+            height: 100%;
+            transform: none !important;
+        }
+        body.mobile-deck #slide-frame { width: 100%; height: 100%; }
+
+        /* Controls Container */
+        #controls {
+            position: fixed;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(34, 29, 23, 0.9);
+            padding: 8px 16px;
+            border-radius: 10px 10px 0 0;
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            z-index: 1000;
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-bottom: none;
+            backdrop-filter: blur(8px);
+        }
+
+        /* Navigation Buttons */
+        .nav-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            background: transparent;
+            border: none;
+            color: rgba(255, 255, 255, 0.6);
+            padding: 6px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 11px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .nav-btn:hover:not(:disabled) {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+
+        .nav-btn:disabled {
+            opacity: 0.25;
+            cursor: not-allowed;
+        }
+
+        .nav-btn svg {
+            width: 14px;
+            height: 14px;
+        }
+
+        /* Slide Info */
+        .slide-info-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            min-width: 80px;
+        }
+
+        #slide-info {
+            font-size: 11px;
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.5);
+            letter-spacing: 0.02em;
+        }
+
+        /* Progress Bar */
+        .progress-container {
+            width: 100%;
+            height: 2px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 1px;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: #B87514;
+            border-radius: 1px;
+            transition: width 0.3s ease;
+        }
+
+        /* Slide Selector Dropdown */
+        .slide-selector {
+            position: relative;
+        }
+
+        .selector-btn {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            background: transparent;
+            border: none;
+            color: rgba(255, 255, 255, 0.6);
+            padding: 6px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 11px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .selector-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+
+        .selector-btn svg {
+            width: 12px;
+            height: 12px;
+            opacity: 0.5;
+        }
+
+        /* Dropdown Menu */
+        .dropdown-menu {
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            margin-bottom: 8px;
+            background: rgba(34, 29, 23, 0.98);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 8px;
+            min-width: 220px;
+            max-height: 400px;
+            overflow-y: auto;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+            display: none;
+        }
+
+        .dropdown-menu.open {
+            display: block;
+        }
+
+        .dropdown-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .dropdown-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+
+        .dropdown-item.active {
+            background: rgba(184, 117, 20, 0.15);
+            color: #D4A054;
+        }
+
+        .dropdown-item .slide-num {
+            width: 24px;
+            height: 24px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+
+        .dropdown-item.active .slide-num {
+            background: rgba(184, 117, 20, 0.25);
+        }
+
+        /* Divider */
+        .controls-divider {
+            width: 1px;
+            height: 20px;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        /* Version pills in controls bar */
+        .version-bar {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+        }
+        .version-btn {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            background: transparent;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.5);
+            padding: 4px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 11px;
+            font-weight: 600;
+            transition: all 0.15s ease;
+        }
+        .version-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+        .version-btn.active {
+            background: rgba(184, 117, 20, 0.2);
+            border-color: #B87514;
+            color: #D4A054;
+        }
+
+        /* Share button */
+        #share-btn {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            background: transparent;
+            border: none;
+            color: rgba(255, 255, 255, 0.6);
+            padding: 6px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 11px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            position: relative;
+            gap: 4px;
+        }
+        #share-btn:hover { background: rgba(255,255,255,0.1); color: white; }
+        #share-btn svg { width: 14px; height: 14px; }
+        #share-btn .copied-tip {
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #B87514;
+            color: white;
+            font-size: 11px;
+            padding: 4px 10px;
+            border-radius: 6px;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s;
+            margin-bottom: 6px;
+        }
+        #share-btn .copied-tip.show { opacity: 1; }
+
+        /* Error state */
+        .error-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            color: white;
+            gap: 16px;
+            text-align: center;
+            padding: 24px;
+        }
+        .error-container h2 { font-size: 24px; font-weight: 700; }
+        .error-container p { font-size: 15px; color: rgba(255,255,255,0.6); max-width: 400px; }
+        .error-container a {
+            margin-top: 8px;
+            padding: 10px 20px;
+            background: #B87514;
+            color: white;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        /* Mobile-friendly controls */
+        @media (max-width: 768px) {
+            #controls {
+                padding: 10px 12px;
+                gap: 6px;
+                width: auto;
+                max-width: calc(100% - 16px);
+            }
+            .nav-btn {
+                padding: 10px 12px;
+                font-size: 12px;
+                min-width: 44px;
+                min-height: 44px;
+            }
+            .nav-btn svg { width: 16px; height: 16px; }
+            .nav-btn span { display: none; }
+            #slide-info { font-size: 12px; }
+            .slide-info-container { min-width: 60px; }
+        }
+
+        /* Rotate-device overlay for portrait phones (landscape decks only).
+           Mobile decks (9:16 portrait-native) skip this via body.mobile-deck. */
+        #rotate-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: linear-gradient(145deg, #2A2520, #1A1610);
+            color: #E5E3DE;
+            z-index: 10000;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 32px 24px;
+            font-family: 'Inter', sans-serif;
+        }
+        #rotate-overlay::before {
+            content: '';
+            position: absolute;
+            top: -200px;
+            left: -200px;
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(184,117,20,0.15), transparent 70%);
+            pointer-events: none;
+        }
+        #rotate-overlay::after {
+            content: '';
+            position: absolute;
+            bottom: -200px;
+            right: -200px;
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(212,160,84,0.10), transparent 70%);
+            pointer-events: none;
+        }
+        #rotate-overlay .rotate-inner {
+            position: relative;
+            z-index: 1;
+            max-width: 320px;
+        }
+        #rotate-overlay .phone-icon {
+            width: 96px;
+            height: 96px;
+            margin: 0 auto 28px;
+            border: 3px solid #D4A054;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: rotate-hint 2.4s ease-in-out infinite;
+            box-shadow: 0 0 50px rgba(212,160,84,0.25);
+        }
+        #rotate-overlay .phone-icon svg {
+            width: 44px;
+            height: 44px;
+            color: #D4A054;
+        }
+        @keyframes rotate-hint {
+            0%, 100% { transform: rotate(0deg); }
+            40% { transform: rotate(-90deg); }
+            60% { transform: rotate(-90deg); }
+        }
+        #rotate-overlay h2 {
+            font-family: 'Instrument Serif', Georgia, serif;
+            font-size: 36px;
+            font-weight: 400;
+            line-height: 1.15;
+            letter-spacing: -0.5px;
+            color: #E5E3DE;
+            margin-bottom: 12px;
+        }
+        #rotate-overlay h2 em {
+            font-style: italic;
+            color: #D4A054;
+        }
+        #rotate-overlay p {
+            font-size: 15px;
+            line-height: 1.5;
+            color: rgba(255,255,255,0.6);
+            margin-bottom: 8px;
+        }
+        #rotate-overlay .gradient-line {
+            height: 2px;
+            width: 60px;
+            background: linear-gradient(135deg, #D4A054, #B87514);
+            margin: 20px auto 0;
+            border-radius: 2px;
+        }
+
+        /* Trigger the overlay only on narrow portrait viewports, and only when
+           the current deck is NOT a mobile-native deck. */
+        @media (max-width: 900px) and (orientation: portrait) {
+            body:not(.mobile-deck) #rotate-overlay { display: flex; }
+            body:not(.mobile-deck) #slide-container { display: none; }
+            body:not(.mobile-deck) #controls { display: none !important; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="rotate-overlay">
+        <div class="rotate-inner">
+            <div class="phone-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect>
+                    <line x1="12" y1="18" x2="12.01" y2="18"></line>
+                </svg>
+            </div>
+            <h2>Rotate to <em>landscape</em></h2>
+            <p>This deck is designed for landscape viewing.</p>
+            <p>Turn your phone sideways to continue.</p>
+            <div class="gradient-line"></div>
+        </div>
+    </div>
+
+    <div id="slide-container">
+        <div id="slide-wrapper">
+            <iframe id="slide-frame"></iframe>
+        </div>
+    </div>
+
+    <div id="controls">
+        <a class="nav-btn" href="../index.html" title="Back to Library">
+            <i data-lucide="home"></i>
+        </a>
+
+        <div class="controls-divider"></div>
+
+        <button class="nav-btn" id="prev-btn" onclick="prevSlide()">
+            <i data-lucide="chevron-left"></i>
+            <span>Prev</span>
+        </button>
+
+        <div class="slide-selector">
+            <button class="selector-btn" onclick="toggleDropdown()">
+                <span id="slide-info">Slide 1 / 1</span>
+                <i data-lucide="chevrons-up-down"></i>
+            </button>
+            <div class="dropdown-menu" id="dropdown"></div>
+        </div>
+
+        <div class="slide-info-container">
+            <div class="progress-container">
+                <div class="progress-bar" id="progress-bar"></div>
+            </div>
+        </div>
+
+        <button class="nav-btn" id="next-btn" onclick="nextSlide()">
+            <span>Next</span>
+            <i data-lucide="chevron-right"></i>
+        </button>
+
+        <button id="share-btn" title="Copy share link">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/>
+                <polyline points="16 6 12 2 8 6"/>
+                <line x1="12" y1="2" x2="12" y2="15"/>
+            </svg>
+            <span>Share</span>
+            <span class="copied-tip">Link copied!</span>
+        </button>
+
+        <a id="ppt-btn" href="#" download style="display:none; padding:6px 12px; border-radius:8px; background:rgba(212,26,128,0.15); color:#FFB1DD; font-size:12px; font-weight:600; text-decoration:none; align-items:center; gap:6px; border:1px solid rgba(212,26,128,0.3);" title="Download PPT">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="7 10 12 15 17 10"/>
+                <line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+            <span>Download PPT</span>
+        </a>
+
+        <div id="version-divider" class="controls-divider" style="display:none"></div>
+        <div id="version-bar" class="version-bar" style="display:none"></div>
+    </div>
+
+    <div id="error" class="error-container" style="display:none">
+        <h2>Deck not found</h2>
+        <p id="error-msg">The requested deck could not be loaded.</p>
+        <a href="index.html">Back to Library</a>
+    </div>
+
+    <script src="decks.js"></script>
+    <script src="voiceover-player.js"></script>
+    <script>
+        // Parse URL params
+        const params = new URLSearchParams(window.location.search);
+        const deckId = params.get('deck');
+        const versionId = params.get('version');
+
+        const deck = deckId ? DECKS[deckId] : null;
+
+        function showError(msg) {
+            document.getElementById('slide-container').style.display = 'none';
+            document.getElementById('controls').style.display = 'none';
+            var errorEl = document.getElementById('error');
+            errorEl.style.display = 'flex';
+            document.getElementById('error-msg').textContent = msg;
+            // Hide "Back to Library" link in share mode
+            if (window.__ADAMX_SHARE_MODE) {
+                var backLink = errorEl.querySelector('a');
+                if (backLink) backLink.style.display = 'none';
+            }
+        }
+
+        if (!deck) {
+            showError(deckId
+                ? `Deck "${deckId}" was not found in the registry.`
+                : 'No deck parameter was provided in the URL.');
+        } else if (window.__ADAMX_SHARE_MODE && window.__ADAMX_SHARE_DECK && deckId !== window.__ADAMX_SHARE_DECK) {
+            // Share token is valid but for a different deck — block access
+            showError('This share link is not valid for the requested deck.');
+        } else {
+            init();
+        }
+
+        function init() {
+            // Surface a Download PPT button when the deck declares a pptUrl
+            if (deck.pptUrl) {
+                const pptBtn = document.getElementById('ppt-btn');
+                pptBtn.href = deck.pptUrl;
+                pptBtn.style.display = 'inline-flex';
+            }
+
+            // Build the slides array for this viewer session
+            let slides = [];
+
+            if (deck.type === 'deck') {
+                slides = deck.slides.map(s => ({ file: s.file, title: s.title }));
+            } else if (deck.versions) {
+                // For versioned single-slide projects, show the selected version (or first)
+                const version = deck.versions.find(v => v.id === versionId) || deck.versions[0];
+                slides = [{ file: version.file, title: `${deck.title} — ${version.label}` }];
+
+                // Show version switcher in controls
+                const versionBar = document.getElementById('version-bar');
+                const versionDivider = document.getElementById('version-divider');
+                versionBar.style.display = 'flex';
+                versionDivider.style.display = 'block';
+
+                deck.versions.forEach(v => {
+                    const btn = document.createElement('button');
+                    btn.className = 'version-btn' + (v.id === (versionId || deck.versions[0].id) ? ' active' : '');
+                    btn.textContent = `${v.id} ${v.label}`;
+                    btn.onclick = () => {
+                        window.location.href = `deck_viewer.html?deck=${deckId}&version=${v.id}`;
+                    };
+                    versionBar.appendChild(btn);
+                });
+            }
+
+            // Update page title
+            document.title = `${deck.title} - Deck Viewer`;
+
+            // Single-slide: hide prev/next
+            const isSingle = slides.length === 1;
+            if (isSingle) {
+                document.getElementById('prev-btn').style.display = 'none';
+                document.getElementById('next-btn').style.display = 'none';
+            }
+
+            // --- Deck runner logic (extracted from index.html pattern) ---
+            let currentSlide = 0;
+            const frame = document.getElementById('slide-frame');
+            const slideWrapper = document.getElementById('slide-wrapper');
+            const slideContainer = document.getElementById('slide-container');
+            const info = document.getElementById('slide-info');
+            const progressBar = document.getElementById('progress-bar');
+            const prevBtn = document.getElementById('prev-btn');
+            const nextBtn = document.getElementById('next-btn');
+            const dropdown = document.getElementById('dropdown');
+
+            // Restore from hash
+            const hash = window.location.hash;
+            if (hash) {
+                const n = parseInt(hash.replace('#', ''), 10);
+                if (!isNaN(n) && n >= 1 && n <= slides.length) {
+                    currentSlide = n - 1;
+                }
+            }
+
+            const isMobileDeck = deck && deck.mobile === true;
+            if (isMobileDeck) {
+                document.body.classList.add('mobile-deck');
+            }
+
+            function scaleSlide() {
+                if (isMobileDeck) {
+                    // Mobile deck: slide uses 100vw/100vh internally, no scaling
+                    return;
+                }
+                // Portrait phones see the rotate-overlay (CSS media query), so we only
+                // need to handle landscape scaling here. Use visualViewport when available
+                // for iOS Safari accuracy.
+                const vv = window.visualViewport;
+                const vw = vv ? vv.width : window.innerWidth;
+                const vh = vv ? vv.height : window.innerHeight;
+                const cw = vw;
+                const ch = Math.max(0, vh - 36); // subtract controls bar height
+                const scale = Math.min(cw / 1920, ch / 1080, 1);
+                slideWrapper.style.transform = `scale(${scale})`;
+                slideWrapper.style.transformOrigin = 'center center';
+            }
+            scaleSlide();
+            window.addEventListener('resize', scaleSlide);
+            window.addEventListener('orientationchange', () => setTimeout(scaleSlide, 150));
+            if (window.visualViewport) {
+                window.visualViewport.addEventListener('resize', scaleSlide);
+            }
+
+            function initDropdown() {
+                dropdown.innerHTML = slides.map((s, i) => `
+                    <div class="dropdown-item ${i === currentSlide ? 'active' : ''}" data-idx="${i}">
+                        <span class="slide-num">${i + 1}</span>
+                        <span>${s.title}</span>
+                    </div>
+                `).join('');
+                dropdown.querySelectorAll('.dropdown-item').forEach(el => {
+                    el.addEventListener('click', () => {
+                        goToSlide(parseInt(el.dataset.idx, 10));
+                    });
+                });
+            }
+
+            function updateSlide() {
+                var src = slides[currentSlide].file;
+                // In share mode, pass the token to iframe so auth-gate validates each slide
+                if (window.__ADAMX_SHARE_MODE && window.__ADAMX_SHARE_TOKEN) {
+                    src += (src.indexOf('?') === -1 ? '?' : '&') + 'share=' + encodeURIComponent(window.__ADAMX_SHARE_TOKEN);
+                }
+                frame.src = src;
+                info.textContent = slides.length > 1
+                    ? `Slide ${currentSlide + 1} / ${slides.length}`
+                    : slides[0].title;
+
+                if (slides.length > 1) {
+                    history.replaceState(null, null, `#${currentSlide + 1}`);
+                }
+
+                const progress = ((currentSlide + 1) / slides.length) * 100;
+                progressBar.style.width = `${progress}%`;
+
+                prevBtn.disabled = currentSlide === 0;
+                nextBtn.disabled = currentSlide === slides.length - 1;
+
+                dropdown.querySelectorAll('.dropdown-item').forEach((item, i) => {
+                    item.classList.toggle('active', i === currentSlide);
+                });
+
+                if (deck.voiceover === true && window.VoiceoverPlayer) {
+                    window.VoiceoverPlayer.onSlideChange(currentSlide);
+                }
+            }
+
+            window.nextSlide = function() {
+                if (currentSlide < slides.length - 1) {
+                    currentSlide++;
+                    updateSlide();
+                }
+            };
+
+            window.prevSlide = function() {
+                if (currentSlide > 0) {
+                    currentSlide--;
+                    updateSlide();
+                }
+            };
+
+            function goToSlide(index) {
+                currentSlide = index;
+                updateSlide();
+                closeDropdown();
+            }
+
+            window.toggleDropdown = function() {
+                dropdown.classList.toggle('open');
+            };
+
+            function closeDropdown() {
+                dropdown.classList.remove('open');
+            }
+
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('.slide-selector')) {
+                    closeDropdown();
+                }
+            });
+
+            // Fullscreen
+            function toggleFullscreen() {
+                if (!document.fullscreenElement) {
+                    document.documentElement.requestFullscreen().catch(() => {});
+                } else {
+                    document.exitFullscreen();
+                }
+            }
+
+            slideContainer.addEventListener('dblclick', (e) => {
+                e.preventDefault();
+                toggleFullscreen();
+            });
+
+            // Keyboard navigation
+            function handleKey(e) {
+                if (e.key === 'ArrowRight' || e.key === ' ') {
+                    e.preventDefault();
+                    nextSlide();
+                }
+                if (e.key === 'ArrowLeft') {
+                    e.preventDefault();
+                    prevSlide();
+                }
+                if (e.key === 'r' || e.key === 'R') {
+                    e.preventDefault();
+                    goToSlide(0);
+                }
+                if (e.key === 'f' || e.key === 'F') {
+                    e.preventDefault();
+                    toggleFullscreen();
+                }
+                if (e.key === 'Escape') {
+                    closeDropdown();
+                }
+            }
+
+            document.addEventListener('keydown', handleKey);
+
+            // Touch swipe navigation for mobile (parent document + forwarded from iframe)
+            const SWIPE_THRESHOLD = 50;
+            let touchStartX = 0, touchStartY = 0;
+
+            function handleTouchStart(e) {
+                touchStartX = e.changedTouches[0].screenX;
+                touchStartY = e.changedTouches[0].screenY;
+            }
+            function handleTouchEnd(e) {
+                const dx = e.changedTouches[0].screenX - touchStartX;
+                const dy = e.changedTouches[0].screenY - touchStartY;
+                if (Math.abs(dx) > SWIPE_THRESHOLD && Math.abs(dx) > Math.abs(dy)) {
+                    if (dx < 0) nextSlide();
+                    else prevSlide();
+                }
+            }
+            slideContainer.addEventListener('touchstart', handleTouchStart, { passive: true });
+            slideContainer.addEventListener('touchend', handleTouchEnd, { passive: true });
+
+            // Forward keyboard events from iframe
+            frame.addEventListener('load', () => {
+                try {
+                    frame.contentWindow.document.addEventListener('click', () => {
+                        window.focus();
+                    });
+                    frame.contentWindow.document.addEventListener('keydown', handleKey);
+                    frame.contentWindow.document.addEventListener('dblclick', (e) => {
+                        e.preventDefault();
+                        toggleFullscreen();
+                    });
+                    // Forward touch events from iframe for swipe navigation
+                    frame.contentWindow.document.addEventListener('touchstart', handleTouchStart, { passive: true });
+                    frame.contentWindow.document.addEventListener('touchend', handleTouchEnd, { passive: true });
+                } catch (err) {
+                    // Cross-origin fallback
+                }
+            });
+
+            document.addEventListener('click', () => { window.focus(); });
+
+            window.addEventListener('hashchange', () => {
+                const h = window.location.hash;
+                if (h) {
+                    const n = parseInt(h.replace('#', ''), 10);
+                    if (!isNaN(n) && n >= 1 && n <= slides.length && (n - 1) !== currentSlide) {
+                        currentSlide = n - 1;
+                        updateSlide();
+                    }
+                }
+            });
+
+            document.addEventListener('fullscreenchange', () => {
+                setTimeout(scaleSlide, 100);
+            });
+
+            // Share mode: hide Home button
+            if (window.__ADAMX_SHARE_MODE) {
+                const homeBtn = document.querySelector('#controls a[href="../index.html"]');
+                if (homeBtn) homeBtn.style.display = 'none';
+            }
+
+            // Share button: for authenticated users, show only if a token exists for this deck
+            if (window.__ADAMX_SHARE_TOKENS && !window.__ADAMX_SHARE_MODE) {
+                var deckShareToken = null;
+                var tokens = window.__ADAMX_SHARE_TOKENS;
+                for (var t in tokens) {
+                    if (tokens.hasOwnProperty(t) && tokens[t].deck === deckId) {
+                        deckShareToken = t;
+                        break;
+                    }
+                }
+                if (deckShareToken) {
+                    const shareBtn = document.getElementById('share-btn');
+                    shareBtn.style.display = 'flex';
+                    shareBtn.addEventListener('click', () => {
+                        const url = new URL(window.location.href);
+                        url.searchParams.set('share', deckShareToken);
+                        url.hash = '';
+                        navigator.clipboard.writeText(url.toString()).then(() => {
+                            const tip = shareBtn.querySelector('.copied-tip');
+                            tip.classList.add('show');
+                            setTimeout(() => tip.classList.remove('show'), 1500);
+                        });
+                    });
+                }
+            }
+
+            // Voiceover player (opt-in via deck.voiceover === true)
+            if (deck.voiceover === true && window.VoiceoverPlayer) {
+                window.VoiceoverPlayer.init(deckId);
+            }
+
+            // Initialize
+            lucide.createIcons();
+            initDropdown();
+            updateSlide();
+        }
+    </script>
+
+</body>
+</html>
